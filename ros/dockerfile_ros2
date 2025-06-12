@@ -1,0 +1,66 @@
+# Ubuntu 기본 패키지
+FROM ubuntu:22.04
+
+# Non-interactive apt
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y \
+    locales \
+    lsb-release \
+    curl \
+    gnupg2 \
+    build-essential \
+    python3-pip \
+    git \
+    && locale-gen en_US en_US.UTF-8 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Locale 설정
+ENV LANG en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
+
+# ROS2 key 등록
+RUN curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key \
+    | gpg --dearmor -o /usr/share/keyrings/ros-archive-keyring.gpg
+
+# ROS2 source list 추가
+RUN echo "deb [signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] \
+    http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" \
+    | tee /etc/apt/sources.list.d/ros2.list
+
+RUN sed -i 's|http://archive.ubuntu.com/ubuntu|http://mirror.kakao.com/ubuntu|g' /etc/apt/sources.list
+
+# ROS2 설치
+RUN apt-get update && apt-get install -y --fix-missing \
+    ros-humble-desktop \
+    python3-colcon-common-extensions \
+    python3-rosdep \
+    python3-vcstool \
+    && rm -rf /var/lib/apt/lists/*
+
+# rosdep 초기화
+RUN rosdep init || echo "rosdep already initialized"
+RUN rosdep update
+
+# Workspace setup
+WORKDIR /precision_jig_ws
+RUN mkdir -p src
+WORKDIR /precision_jig_ws/src
+RUN git clone https://github.com/axbis-robotics-acs/precision_jig.git
+WORKDIR /precision_jig_ws/src/precision_jig
+
+# === Python requirements 설치 ===
+RUN apt-get update && apt-get install -y --fix-missing ros-humble-realsense2* &&\
+        rm -rf /var/lib/apt/lists/*
+
+
+# CMD ["/bin/bash"]
+
+SHELL ["/bin/bash", "-c"]
+
+ENTRYPOINT ["bash", "-c", "cd /precision_jig_ws && \
+colcon build --symlink-install && \
+source /opt/ros/humble/setup.bash && \
+. install/setup.bash && \
+source /precision_jig_ws/install/local_setup.bash && \
+ros2 launch precision_jig amr_vision_check.launch.py "]
