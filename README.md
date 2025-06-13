@@ -10,7 +10,7 @@ A GUI is included to visualize inspection results and control system behavior.
 
 > **ROS 2 Distro:** Humble  
 > **OS:** Ubuntu 22.04  
-> **Requirements:** Docker, Docker Compose
+> **Requirements:** Docker
 
 ### 1. Clone the Repository
 
