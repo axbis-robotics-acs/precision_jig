@@ -36,7 +36,9 @@ source install/setup.bash
 ros2 launch precision_jig amr_vision_check.launch.py
 ```
 
-AND
+#AND
 
-''' docker restart <this compose container> '''
+```
+docker restart <this_container> 
+```
 
